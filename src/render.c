@@ -39,7 +39,7 @@ void update_player(player_t* p, ctx_t const* ctx) {
 
 
   p->height += p->v_height;//TODO minimal height anpassen
-  int height_map_pos = p->x * p->y - 1;
+  int height_map_pos = p->x + (p->y * ctx->scr_width);
   int map_height = ctx->height_map[height_map_pos];
   if (p->height < (map_height + 20))
     p->height = map_height + 20;
@@ -55,12 +55,19 @@ void update_player(player_t* p, ctx_t const* ctx) {
  *  are 1-based.
  */
 void draw_line(ctx_t* c, int u, int v_from, int v_to, uint32_t color) {
-    NOT_IMPLEMENTED;
-    UNUSED(c);
-    UNUSED(u);
-    UNUSED(v_from);
-    UNUSED(v_to);
-    UNUSED(color);
+  int buffer_entry;
+  for (int i = v_to; i > v_from; i--) {
+    buffer_entry = (u-1) + ( (c->scr_height - i) * c->scr_width ) ;
+    c->out[buffer_entry] = color;
+  }
+  
+  /**
+  for (int i = 0; i < 100; i++) {
+    for (int j = 0; j < 100; j++) {
+      c->out[j * 321 + i] = 0x00ffff00;    
+    }
+  }
+  */
 }
 
 /** Render the scene from player's perspective into the context's out buffer.
