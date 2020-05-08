@@ -29,9 +29,20 @@ float float_mod(float f, int k) {
 /** Move the player according to its velocities.
  */
 void update_player(player_t* p, ctx_t const* ctx) {
-    NOT_IMPLEMENTED;
-    UNUSED(p);
-    UNUSED(ctx);
+  p->angle += p->v_angular %= 360;
+  float r_angle = p->angle * PI / 180;
+  
+  p->x += p->v*cos(r_angle);
+  p->y -= p->v*sin(r_angle);
+  float_mod(p->x, ctx->scr_width);
+  float_mod(p->y, ctx->scr_height);
+
+
+  p->height += p->v_height;//TODO minimal height anpassen
+  int height_map_pos = p->x * p->y - 1;
+  int map_height = ctx->height_map[height_map_pos];
+  if (p->height < (map_height + 20))
+    p->height = map_height + 20;
 }
 
 /** Draw a vertical line into the context's out buffer in the screen column u
