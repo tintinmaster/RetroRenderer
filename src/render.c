@@ -37,12 +37,13 @@ void update_player(player_t* p, ctx_t const* ctx) {
   //changing position and making sure player is in border
   p->x += p->v*cos(r_angle);
   p->y -= p->v*sin(r_angle);
-  float_mod(p->x, ctx->map_size);
-  float_mod(p->y, ctx->map_size);
+  p->x = float_mod(p->x, ctx->map_size);
+  p->y = float_mod(p->y, ctx->map_size);
 
   //changing height and checking if height is under min. height
   uint8_t newHeight = p->height + p->v_height; 
   int height_map_pos = p->x + (p->y * ctx->map_size);
+  //printf("%d\n", height_map_pos);
   uint8_t map_height = ctx->height_map[height_map_pos];
   if (newHeight < (map_height + 20)){
     p->height = map_height + 20;
@@ -114,24 +115,38 @@ void render(const player_t* p, ctx_t* c) {
     //MI berechne Punkt Q_u, ermittle Höhe und zeichne Linie
     for (int u = 1; u <= width; u++) {
       //berechne Punkt Q_u
-      int qux = lerp(lx, rx, (1/(width-1))*(u-1));
-      int quy = lerp(ly, ry, (1/(width-1))*(u-1));
+      float modifier = (float)(u-1) / (width - 1);
+      //printf("u: %d width: %d modifier: %.8f\n", u, width, modifier);
+      float quxRaw = (1 - modifier) * lx + modifier * rx;
+      float quyRaw = (1 - modifier) * ly + modifier * ry;
+      int qux = float_mod(quxRaw, map_size);
+      int quy = float_mod(quyRaw, map_size);
+
+
       //checking if point Q_u is within coordinates
-      if ((qux < 0) || (quy < 0))
-        continue;
-      if ((qux > map_size) || (quy > map_size)) 
-        continue;
+      //DEBUG printf("x = %d und y = %d\n", qux, quy );
+      //DEBUG printf("map_size: %d\n", map_size);
       
       int pos = qux + quy * map_size;
-
+      
       //berechne die dargestelle Höhe v von Q_u auf dem Bildschirm
       uint8_t quHeight = c->height_map[pos];
-      uint8_t screenHeight = (width / 2) * ((quHeight - p->height) / d) + (height / 2);
+      float screenHeightTest = ((float)width * (quHeight - p->height)) / (d * 2) + (float)height / 2;
+      if (screenHeightTest < 1 || screenHeightTest > height)
+        continue;
 
+      uint8_t screenHeight = screenHeightTest;
+      //TODO Bleibt der obere wert bestehen, nach einem for loop?????
       //zeichne eine vertikale Linie in der Farbe von Q_u vom Boden des Bildschirms zu v in Spalte u
 
-      draw_line(c, u, 1, screenHeight, c->color_map[pos]);
-
+      uint32_t color = c->color_map[pos];
+      //printf("lx: %.2f ly: %.2f rx: %.2f ry: %.2f qux: %d, quy: %d\n", lx, ly, rx, ry, qux, quy);
+      //printf("modifier %.10f\n", modifier );
+      //printf("u: %d pos qu: %d quZ %d scrHeight:%d \n",u, pos, quHeight, screenHeight);
+      //printf("höhe karte: %d render höhe: %d oder %d spieler höhe: %d in spalte %d mit farbe: %x aktuelle distanz %d\n", quHeight, screenHeight, screenHeightTest, p->height, u, color, d);
+      //printf("player x: %.2f player y: %.2f \n", px, py );
+      draw_line(c, u, 1, screenHeight, color);
+      
     }
   }
 }
