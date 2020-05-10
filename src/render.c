@@ -1,4 +1,3 @@
-
 #include "render.h"
 
 #include <math.h>
@@ -49,7 +48,7 @@ void update_player(player_t* p, ctx_t const* ctx) {
   }
 }
 
-/** Draw a vertical line into the context's out buffer in the screen column u
+/** Draw a vertical line into the contexts out buffer in the screen column u
  *  from screen row v_from (exclusively) to screen row v_to (inclusively).
  *
  *  For every call to this function, v_from <= v_to has to hold.
@@ -75,56 +74,48 @@ int lerp(float v0, float v1, float i){
 
 
 void render(const player_t* p, ctx_t* c) {
-  int width = c->scr_width;
-  int height = c->scr_height;
-  //initializing the sky
-  for (int x = 0; x < width; ++x) {
-    for (int y = 0; y < height; ++y) {
-      c->out[x + y * width] = c->sky_color;
+  //making the sky blue
+  for (int x = 0; x < c->scr_width; x++){
+    for (int y = 0; y < c->scr_height; y++) {
+        c->out[x + y * c->scr_width] = c->sky_color;
     }
   }
-  float r_angle = p->angle * PI / 180;
-  float px = p->x;
-  float py = p->y;
-  int map_size = c->map_size;
   
-  //printf("angle: %d\n", p->angle);
-  //printf("x: %.2f y: %.2f\n", px, py );
+  float r_angle = p->angle * PI / 180;
 
-  //für jede Entfernung d < D, absteigend:
-  for (int d = c->distance; d > 0; d--) {
+  for(int d = c->distance; d > 0; d--) {
     //berechne die Endpunkte L und R der Senkrechten zur Beobachtungsrichtung mit Abstand d
     int a = cos(r_angle) * d;
     int b = sin(r_angle) * d;
 
-    int lx = px + a - b;
-    int ly = py - b - a;
+    int lx = p->x + a - b;
+    int ly = p->y - b - a; 
 
-    int rx = px + a + b;
-    int ry = px - b + a;
+    int rx = p->x + a + b;
+    int ry = p->y - b + a;
 
-    //wähle für jede Bildschirmspalte u einen Punkt Q_u auf der Strecke zwischen L und R
-    //für jede Bildschirmspalte u:
-    for (int u = 1; u <= width; u++) {
+    for(int u=1; u <= c->scr_width; u++) {
       //berechne Punkt Q_u
-      float modifier = (float)(u-1) / (width - 1);
-      //float quxRaw = (1 - modifier) * lx + modifier * rx;
-      //float quyRaw = (1 - modifier) * ly + modifier * ry;
-      int qux = float_mod(lerp(lx, rx, modifier), map_size);
-      int quy = float_mod(lerp(ly, ry, modifier), map_size);
-      int pos = qux + quy * map_size;
-      
-      //berechne die dargestelle Höhe v von Q_u auf dem Bildschirm
+      float modifier = (float)(u-1) / (c->scr_width-1);
+      int qux = float_mod(lerp(lx, rx, modifier), c->map_size);
+      int quy = float_mod(lerp(ly, ry, modifier), c->map_size);
+      int pos = qux + quy * c->map_size;
+
+
+      //berechne die dargestellte Höhe v von Q_u auf dem Bildschirm
       int quHeight = c->height_map[pos];
-      int screenHeight = (width/2) * ((quHeight - p->height)/(float) d) +(height/2);
-      if (screenHeight < 1 || screenHeight > height)
+      int screenHeight = (c->scr_width / 2) * ((quHeight - p->height) / (float) d) + (c->scr_height / 2);
+      if (screenHeight < 1 || screenHeight > c->scr_height)
         continue;
+      
       //zeichne eine vertikale Linie in der Farbe von Q_u vom Boden des Bildschirms zu v in Spalte u
       draw_line(c, u, 0, screenHeight, c->color_map[pos]);
-
+      
     }
   }
 }
+
+
 
 int bonus_implemented(void) {
     // TODO change to 1 if the bonus exercise is implemented.
