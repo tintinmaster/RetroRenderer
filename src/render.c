@@ -125,7 +125,7 @@ void render(const player_t* p, ctx_t* c) {
 
       if (calculatedHeight < 0 || c->scr_height < calculatedHeight)
         continue;
-      if (calculatedHeight < lastMaxHeight)
+      if (calculatedHeight <= lastMaxHeight)
         continue;
 
       lastMaxHeight = calculatedHeight;
