@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "util.h"
 
@@ -30,7 +31,9 @@ float float_mod(float f, int k) {
 void update_player(player_t* p, ctx_t const* ctx) {
   //changing angle of player and making sure it is in [0-360]
   p->angle += p->v_angular;
-  p->angle = float_mod(p->angle, 360);
+  p->angle += 720;
+  p->angle %= 360;
+  //p->angle = float_mod(p->angle, 360);
   float r_angle = p->angle * PI / 180;
 
   //changing position and making sure player is in border
@@ -75,14 +78,86 @@ int lerp(float v0, float v1, float i){
 
 void render(const player_t* p, ctx_t* c) {
   //making the sky blue
-  for (int x = 0; x < c->scr_width; x++){
+  /**for (int x = 0; x < c->scr_width; x++){
     for (int y = 0; y < c->scr_height; y++) {
         c->out[x + y * c->scr_width] = c->sky_color;
     }
   }
-  
-  float r_angle = p->angle * PI / 180;
+  */
 
+  float r_angle = p->angle * PI / 180;
+  
+
+  float a_factor = cos(r_angle);
+  float b_factor = sin(r_angle);
+
+
+  for (int column = 1; column < c->scr_width; column++) {
+    
+    uint32_t* row;
+    row = (uint32_t*) calloc(c->scr_height + 1, sizeof(uint32_t));
+    /**for (int i = 0; i < c->scr_height; i++) {
+      row[i] = 0x00000000;
+    }
+    */
+    
+    int lastMaxHeight = 0;
+    for (int d = 1; d <= c->distance; d++) {
+      float a = a_factor * d;
+      float b = b_factor * d;
+
+      float lx = p->x + a - b;
+      float ly = p->y - b - a; 
+      float rx = p->x + a + b;
+      float ry = p->y - b + a;
+
+      float modifier = (float) (column-1) / (c->scr_width-1);
+      int qux = float_mod(lerp(lx, rx, modifier), c->map_size);
+      int quy = float_mod(lerp(ly, ry, modifier), c->map_size);
+      
+      int pos = qux + quy * c->map_size;
+
+      int quz = c->height_map[pos];
+
+      int calculatedHeight = (c->scr_width / 2) * ((quz - p-> height) / (float) d) + (c->scr_height / 2);
+      
+
+
+      if (calculatedHeight < 0 || c->scr_height < calculatedHeight)
+        continue;
+      if (calculatedHeight < lastMaxHeight)
+        continue;
+
+      lastMaxHeight = calculatedHeight;
+      //printf("%d\n",lastMaxHeight);
+      //uint32_t test = c->color_map[pos];
+      row[calculatedHeight] = c->color_map[pos];
+      //printf("%d %d %d %d\n", qux, quy, a, b, a_factor, b_factor);
+  
+    }
+    
+    int lastPixel = c->scr_height;
+    uint32_t lastColor = c->sky_color;
+    for (int i = c->scr_height; i >= 0; i--) {
+      if (row[i] == 0 && i != 0)
+        continue;
+      
+      draw_line(c, column, i, lastPixel, lastColor);
+
+      if (i == 0)
+        continue;
+      lastPixel = i;
+      //printf("%d\n", lastColor);
+      lastColor = row[i];
+
+    }
+
+    free(row);
+    row = NULL;
+
+  }
+
+  /** Old implementation
   for(int d = c->distance; d > 0; d--) {
     //berechne die Endpunkte L und R der Senkrechten zur Beobachtungsrichtung mit Abstand d
     int a = cos(r_angle) * d;
@@ -113,11 +188,12 @@ void render(const player_t* p, ctx_t* c) {
       
     }
   }
+  */
 }
 
 
 
 int bonus_implemented(void) {
     // TODO change to 1 if the bonus exercise is implemented.
-    return 0;
+    return 1;
 }
