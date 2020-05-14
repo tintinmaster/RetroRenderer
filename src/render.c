@@ -78,13 +78,13 @@ int lerp(float v0, float v1, float i){
 
 void render(const player_t* p, ctx_t* c) {
   //making the sky blue
-  /**for (int x = 0; x < c->scr_width; x++){
+  for (int x = 0; x < c->scr_width; x++){
     for (int y = 0; y < c->scr_height; y++) {
         c->out[x + y * c->scr_width] = c->sky_color;
     }
   }
-  */
-
+ 
+  /**
   float r_angle = p->angle * PI / 180;
   
 
@@ -96,10 +96,10 @@ void render(const player_t* p, ctx_t* c) {
     
     uint32_t* row;
     row = (uint32_t*) calloc(c->scr_height + 1, sizeof(uint32_t));
-    /**for (int i = 0; i < c->scr_height; i++) {
-      row[i] = 0x00000000;
-    }
-    */
+//    for (int i = 0; i < c->scr_height; i++) {
+//      row[i] = 0x00000000;
+//    }
+    
     
     int lastMaxHeight = 0;
     for (int d = 1; d <= c->distance; d++) {
@@ -125,7 +125,7 @@ void render(const player_t* p, ctx_t* c) {
 
       if (calculatedHeight < 0 || c->scr_height < calculatedHeight)
         continue;
-      if (calculatedHeight <= lastMaxHeight)
+      if (calculatedHeight < lastMaxHeight)
         continue;
 
       lastMaxHeight = calculatedHeight;
@@ -156,9 +156,16 @@ void render(const player_t* p, ctx_t* c) {
     row = NULL;
 
   }
+  */
+  
 
-  /** Old implementation
-  for(int d = c->distance; d > 0; d--) {
+  float r_angle = p->angle * PI / 180;
+  
+  int* lastHeightInColumn;
+  lastHeightInColumn = calloc(c->scr_width, sizeof(int));
+  //Old implementation
+  //
+  for(int d = 1; d <= c->distance; d++) {
     //berechne die Endpunkte L und R der Senkrechten zur Beobachtungsrichtung mit Abstand d
     int a = cos(r_angle) * d;
     int b = sin(r_angle) * d;
@@ -182,13 +189,18 @@ void render(const player_t* p, ctx_t* c) {
       int screenHeight = (c->scr_width / 2) * ((quHeight - p->height) / (float) d) + (c->scr_height / 2);
       if (screenHeight < 1 || screenHeight > c->scr_height)
         continue;
+
+      if (screenHeight < lastHeightInColumn[u-1])
+        continue;
       
       //zeichne eine vertikale Linie in der Farbe von Q_u vom Boden des Bildschirms zu v in Spalte u
-      draw_line(c, u, 0, screenHeight, c->color_map[pos]);
+      draw_line(c, u, lastHeightInColumn[u-1], screenHeight, c->color_map[pos]);
+      lastHeightInColumn[u-1] = screenHeight;
       
     }
   }
-  */
+  free (lastHeightInColumn);
+  lastHeightInColumn = NULL;
 }
 
 
