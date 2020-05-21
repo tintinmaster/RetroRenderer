@@ -165,7 +165,7 @@ void render(const player_t* p, ctx_t* c) {
   lastHeightInColumn = calloc(c->scr_width, sizeof(int));
   //Old implementation
   //
-  for(int d = 1; d <= c->distance; d++) {
+  for(int d = 1; d < c->distance; d++) {
     //berechne die Endpunkte L und R der Senkrechten zur Beobachtungsrichtung mit Abstand d
     int a = cos(r_angle) * d;
     int b = sin(r_angle) * d;
@@ -187,12 +187,14 @@ void render(const player_t* p, ctx_t* c) {
       //berechne die dargestellte Höhe v von Q_u auf dem Bildschirm
       int quHeight = c->height_map[pos];
       int screenHeight = (c->scr_width / 2) * ((quHeight - p->height) / (float) d) + (c->scr_height / 2);
-      if (screenHeight < 1 || screenHeight > c->scr_height)
-        continue;
+      //if (screenHeight < 1 || screenHeight > c->scr_height)
+      //  continue;
 
       if (screenHeight < lastHeightInColumn[u-1])
         continue;
-      
+      if (screenHeight > c->scr_height){
+        screenHeight = c->scr_height;
+      }
       //zeichne eine vertikale Linie in der Farbe von Q_u vom Boden des Bildschirms zu v in Spalte u
       draw_line(c, u, lastHeightInColumn[u-1], screenHeight, c->color_map[pos]);
       lastHeightInColumn[u-1] = screenHeight;
